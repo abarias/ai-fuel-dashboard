@@ -1,0 +1,41 @@
+.cmenu {
+  position: fixed;
+  z-index: 1000;
+  background: rgba(28, 28, 34, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  padding: 4px;
+  min-width: 180px;
+  backdrop-filter: blur(16px);
+}
+
+.cmenu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 12px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.82);
+  border-radius: 5px;
+  transition: background 0.1s;
+  cursor: pointer;
+}
+
+.cmenu button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cmenu__divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 3px 6px;
+}
+
+.cmenu__danger {
+  color: #f87171 !important;
+}
+
+.cmenu__danger:hover {
+  background: rgba(248, 113, 113, 0.12) !important;
+}

@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Rust build artifacts
+src-tauri/target/
+
+# Generated icon sources (regenerate with npm run tauri icon)
+src-tauri/icons/source.png
+
+# macOS
+.DS_Store
+
+# Tauri generated schemas (regenerated on build)
+src-tauri/gen/
+
+# Local env
+.env
+.env.local

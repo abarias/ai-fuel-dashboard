@@ -1,0 +1,91 @@
+.prow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prow__top {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.prow__icon {
+  font-size: 9px;
+  width: 12px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.prow__name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prow__pct {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: right;
+}
+
+.prow--green  .prow__pct { color: #4ade80; }
+.prow--yellow .prow__pct { color: #facc15; }
+.prow--red    .prow__pct { color: #f87171; }
+
+.prow__bar-wrap {
+  padding-left: 17px;
+}
+
+.prow__bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.prow__fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.prow__fill--green  { background: #4ade80; }
+.prow__fill--yellow { background: #facc15; }
+.prow__fill--red    { background: #f87171; }
+
+.prow__detail {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 17px;
+  font-size: 10px;
+  margin-top: 1px;
+}
+
+.prow__detail-label {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.prow__detail-val {
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+.prow__auto-badge {
+  margin-left: 5px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  border-radius: 3px;
+  padding: 0 4px;
+  vertical-align: middle;
+}
