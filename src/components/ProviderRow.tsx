@@ -1,5 +1,6 @@
 import type { ProviderComputed } from "../types";
 import { formatTokens } from "../utils/format";
+import { formatCountdown } from "../utils/calculations";
 import "./ProviderRow.css";
 
 const ICONS: Record<string, string> = {
@@ -15,7 +16,9 @@ interface Props {
 }
 
 export default function ProviderRow({ provider, expanded, todayTokens }: Props) {
-  const { remainingPercentage, status, resetCountdown } = provider;
+  const { remainingPercentage, status } = provider;
+  // Computed at render time so it ticks live (Widget re-renders every minute)
+  const resetCountdown = formatCountdown(new Date(provider.resetAt));
   const icon = ICONS[provider.type] ?? "●";
   const isTokenBased = provider.allowanceUnit === "tokens";
 

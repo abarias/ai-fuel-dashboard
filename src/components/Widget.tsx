@@ -7,17 +7,22 @@ import ProviderRow from "./ProviderRow";
 import Settings from "./Settings";
 import ContextMenu from "./ContextMenu";
 import { formatTokens } from "../utils/format";
+import { formatCountdown } from "../utils/calculations";
 import "./Widget.css";
 
 export default function Widget() {
   const { providers, overall, todayBurns, widgetState, isSyncing, loadData, setWidget } = useProviders();
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [, setTick] = useState(0); // increments every minute to re-render live countdowns
 
   useEffect(() => {
     void loadData();
 
+    // Re-render countdowns every minute so they tick visually
+    const clockInterval = setInterval(() => setTick((t) => t + 1), 60_000);
+
     // Fallback poll every 5 minutes in case the file watcher misses something
-    const interval = setInterval(() => void loadData(), 5 * 60_000);
+    const dataInterval = setInterval(() => void loadData(), 5 * 60_000);
 
     // Primary trigger: file watcher in Rust detects JSONL changes in real time
     let unlisten: (() => void) | undefined;
@@ -25,7 +30,8 @@ export default function Widget() {
       .then((fn) => { unlisten = fn; });
 
     return () => {
-      clearInterval(interval);
+      clearInterval(clockInterval);
+      clearInterval(dataInterval);
       unlisten?.();
     };
   }, []);
@@ -109,7 +115,7 @@ export default function Widget() {
         {nearestReset && (
           <div className="widget__reset">
             <span>Reset in</span>
-            <span>{nearestReset.resetCountdown}</span>
+            <span>{formatCountdown(new Date(nearestReset.resetAt))}</span>
           </div>
         )}
 
