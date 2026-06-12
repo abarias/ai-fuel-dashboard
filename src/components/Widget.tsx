@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { listen } from "@tauri-apps/api/event";
 import { useProviders } from "../store/useProviders";
 import ProviderRow from "./ProviderRow";
 import Settings from "./Settings";
@@ -14,8 +15,19 @@ export default function Widget() {
 
   useEffect(() => {
     void loadData();
-    const id = setInterval(() => void loadData(), 60_000);
-    return () => clearInterval(id);
+
+    // Fallback poll every 5 minutes in case the file watcher misses something
+    const interval = setInterval(() => void loadData(), 5 * 60_000);
+
+    // Primary trigger: file watcher in Rust detects JSONL changes in real time
+    let unlisten: (() => void) | undefined;
+    listen<void>("claude-usage-changed", () => void loadData())
+      .then((fn) => { unlisten = fn; });
+
+    return () => {
+      clearInterval(interval);
+      unlisten?.();
+    };
   }, []);
 
   // Sync always-on-top with Tauri on mount

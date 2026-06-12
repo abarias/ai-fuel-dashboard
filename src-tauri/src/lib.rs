@@ -1,7 +1,9 @@
 use std::fs;
+use std::time::{Duration, Instant};
+use notify::{RecursiveMode, Watcher};
 use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager,
+    Emitter, Manager,
 };
 
 // ── Claude usage scanner ──────────────────────────────────────────────────────
@@ -141,6 +143,58 @@ pub fn run() {
         .setup(|app| {
             let win = app.get_webview_window("main").unwrap();
             win.set_always_on_top(true)?;
+
+            // ── File watcher: emit event when Claude JSONL files change ──────
+            let projects_dir = std::env::var("HOME")
+                .map(std::path::PathBuf::from)
+                .unwrap_or_default()
+                .join(".claude")
+                .join("projects");
+
+            if projects_dir.exists() {
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    let (tx, rx) = std::sync::mpsc::channel::<notify::Result<notify::Event>>();
+
+                    let mut watcher = match notify::recommended_watcher(move |res| {
+                        let _ = tx.send(res);
+                    }) {
+                        Ok(w) => w,
+                        Err(_) => return,
+                    };
+
+                    if watcher.watch(&projects_dir, RecursiveMode::Recursive).is_err() {
+                        return;
+                    }
+
+                    loop {
+                        match rx.recv() {
+                            Ok(Ok(event)) => {
+                                let is_jsonl = event.paths.iter().any(|p| {
+                                    p.extension().and_then(|e| e.to_str()) == Some("jsonl")
+                                });
+                                if !is_jsonl {
+                                    continue;
+                                }
+                                // Debounce: drain events for 800 ms so we emit once
+                                // per "Claude response finished" rather than once per write.
+                                let deadline = Instant::now() + Duration::from_millis(800);
+                                loop {
+                                    let remaining = deadline.saturating_duration_since(Instant::now());
+                                    if remaining.is_zero() { break; }
+                                    match rx.recv_timeout(remaining) {
+                                        Ok(_) => continue,
+                                        Err(_) => break,
+                                    }
+                                }
+                                let _ = app_handle.emit("claude-usage-changed", ());
+                            }
+                            // Channel closed or watcher error — exit thread cleanly
+                            Ok(Err(_)) | Err(_) => break,
+                        }
+                    }
+                });
+            }
 
             TrayIconBuilder::new()
                 .tooltip("AI Fuel Dashboard")
