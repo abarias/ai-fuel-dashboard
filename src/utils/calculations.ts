@@ -1,4 +1,16 @@
-import type { Provider, ProviderComputed, OverallHealth, StatusColor, RiskStatus } from "../types";
+import type { Provider, ProviderComputed, OverallHealth, StatusColor, RiskStatus, ResetCadence } from "../types";
+
+/** Start of the current billing period, derived from the next reset date. */
+export function periodStartIso(resetAt: string, cadence: ResetCadence): string {
+  const next = new Date(resetAt);
+  switch (cadence) {
+    case "monthly": next.setMonth(next.getMonth() - 1); break;
+    case "weekly":  next.setDate(next.getDate() - 7);   break;
+    case "daily":   next.setDate(next.getDate() - 1);   break;
+    default:        return new Date(0).toISOString();
+  }
+  return next.toISOString();
+}
 
 export function computeProvider(provider: Provider): ProviderComputed {
   // For token-based providers, budget = tokensBudget; otherwise totalAllowance

@@ -1,5 +1,5 @@
 import type { ProviderComputed } from "../types";
-import { formatTokens } from "../utils/format";
+import { formatTokens, formatUsd } from "../utils/format";
 import { formatCountdown } from "../utils/calculations";
 import "./ProviderRow.css";
 
@@ -21,6 +21,7 @@ export default function ProviderRow({ provider, expanded, todayTokens }: Props) 
   const resetCountdown = formatCountdown(new Date(provider.resetAt));
   const icon = ICONS[provider.type] ?? "●";
   const isTokenBased = provider.allowanceUnit === "tokens";
+  const isUsdBased   = provider.allowanceUnit === "usd";
 
   return (
     <div className={`prow prow--${status}`}>
@@ -47,6 +48,14 @@ export default function ProviderRow({ provider, expanded, todayTokens }: Props) 
               <span className="prow__detail-label">Used</span>
               <span className="prow__detail-val">
                 {formatTokens(provider.usedAmount)} / {formatTokens(provider.tokensBudget)} tokens
+              </span>
+            </div>
+          )}
+          {isUsdBased && (
+            <div className="prow__detail">
+              <span className="prow__detail-label">Spend</span>
+              <span className="prow__detail-val">
+                {formatUsd(provider.usedAmount)} / {formatUsd(provider.totalAllowance)}
               </span>
             </div>
           )}

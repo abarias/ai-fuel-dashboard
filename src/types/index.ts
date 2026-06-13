@@ -1,9 +1,10 @@
 export type ResetCadence = "daily" | "weekly" | "monthly" | "custom";
 export type ProviderType = "claude" | "codex" | "copilot";
-export type AllowanceUnit = "tokens" | "requests" | "messages" | "compute" | "normalized";
+export type AllowanceUnit = "tokens" | "usd" | "requests" | "messages" | "compute" | "normalized";
 export type StatusColor = "green" | "yellow" | "red";
 export type RiskStatus = "safe" | "at-risk" | "conservation";
 export type ActiveView = "widget" | "settings";
+export type ViewMode = "full" | "pill";
 
 export interface Provider {
   id: number;
@@ -18,6 +19,7 @@ export interface Provider {
   notes?: string;
   autoSync: boolean;
   tokensBudget: number;
+  apiKey?: string;
 }
 
 export interface ProviderComputed extends Provider {
@@ -40,6 +42,7 @@ export interface WidgetState {
   isExpanded: boolean;
   alwaysOnTop: boolean;
   activeView: ActiveView;
+  viewMode: ViewMode;
 }
 
 export interface ClaudeUsageResult {

@@ -4,6 +4,7 @@ import type { Provider, ProviderComputed, OverallHealth, WidgetState, TodayBurn 
 import { loadProviders, saveProvider } from "../utils/db";
 import { computeProvider, computeOverallHealth } from "../utils/calculations";
 import { syncClaudeProvider } from "../utils/claudeSync";
+import { syncCodexProvider } from "../utils/codexSync";
 
 interface Store {
   providers: ProviderComputed[];
@@ -31,6 +32,7 @@ const defaultWidget: WidgetState = {
   isExpanded: true,
   alwaysOnTop: true,
   activeView: "widget",
+  viewMode: "full",
 };
 
 export const useProviders = create<Store>()(
@@ -57,14 +59,20 @@ export const useProviders = create<Store>()(
             raw.map(async (p) => {
               if (!p.autoSync) return;
               try {
-                const result = await syncClaudeProvider(p);
-                p.usedAmount = result.usedAmount;
-                todayBurns.push({
-                  providerId:   p.id,
-                  providerName: p.name,
-                  tokens:       result.todayTokens,
-                  messages:     result.todayMessages,
-                });
+                if (p.type === "claude") {
+                  const result = await syncClaudeProvider(p);
+                  p.usedAmount = result.usedAmount;
+                  todayBurns.push({
+                    providerId:   p.id,
+                    providerName: p.name,
+                    tokens:       result.todayTokens,
+                    messages:     result.todayMessages,
+                  });
+                } else if (p.type === "codex") {
+                  const result = await syncCodexProvider(p);
+                  p.usedAmount     = result.usedAmount;
+                  p.totalAllowance = result.totalAllowance;
+                }
               } catch (e) {
                 console.warn(`Sync failed for ${p.name}:`, e);
               }

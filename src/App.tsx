@@ -1,6 +1,9 @@
 import "./app.css";
+import { useProviders } from "./store/useProviders";
 import Widget from "./components/Widget";
+import PillWidget from "./components/PillWidget";
 
 export default function App() {
-  return <Widget />;
+  const { widgetState } = useProviders();
+  return widgetState.viewMode === "pill" ? <PillWidget /> : <Widget />;
 }

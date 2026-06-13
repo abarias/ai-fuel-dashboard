@@ -9,13 +9,14 @@ type FormData = {
   totalAllowance: number;
   resetCadence:   ResetCadence;
   resetAt:        string;
+  apiKey:         string;
 };
 
 export default function Settings() {
   const { providers, widgetState, updateProvider, setWidget } = useProviders();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormData>({
-    usedAmount: 0, totalAllowance: 100, resetCadence: "monthly", resetAt: "",
+    usedAmount: 0, totalAllowance: 100, resetCadence: "monthly", resetAt: "", apiKey: "",
   });
 
   const startEdit = (p: Provider) => {
@@ -25,15 +26,20 @@ export default function Settings() {
       totalAllowance: p.totalAllowance,
       resetCadence:   p.resetCadence,
       resetAt:        p.resetAt.split("T")[0],
+      apiKey:         p.apiKey ?? "",
     });
   };
 
-  const commitEdit = async (id: number) => {
+  const commitEdit = async (id: number, p: Provider) => {
+    const hasApiKey = form.apiKey.trim().length > 0;
     await updateProvider(id, {
       usedAmount:     form.usedAmount,
       totalAllowance: form.totalAllowance,
       resetCadence:   form.resetCadence,
       resetAt:        form.resetAt ? new Date(form.resetAt).toISOString() : undefined,
+      apiKey:         form.apiKey.trim() || undefined,
+      // Enable auto-sync for API-driven providers when a key is present
+      autoSync:       p.type === "codex" ? hasApiKey : p.autoSync,
     });
     setEditingId(null);
   };
@@ -42,6 +48,9 @@ export default function Settings() {
     p.totalAllowance > 0
       ? Math.round(((p.totalAllowance - p.usedAmount) / p.totalAllowance) * 100)
       : 0;
+
+  const unitLabel = (p: Provider) =>
+    p.allowanceUnit === "usd" ? "USD" : p.allowanceUnit === "tokens" ? "tokens" : "";
 
   return (
     <div className="s-root">
@@ -68,12 +77,10 @@ export default function Settings() {
               <span className="s-provider-name">{p.name}</span>
               <span className="s-provider-pct">{pct(p)}% remaining</span>
               {editingId !== p.id ? (
-                <button className="s-btn" onClick={() => startEdit(p)}>
-                  Edit
-                </button>
+                <button className="s-btn" onClick={() => startEdit(p)}>Edit</button>
               ) : (
                 <div className="s-edit-btns">
-                  <button className="s-btn s-btn--save" onClick={() => commitEdit(p.id)}>Save</button>
+                  <button className="s-btn s-btn--save" onClick={() => commitEdit(p.id, p)}>Save</button>
                   <button className="s-btn s-btn--cancel" onClick={() => setEditingId(null)}>✕</button>
                 </div>
               )}
@@ -81,22 +88,42 @@ export default function Settings() {
 
             {editingId === p.id && (
               <div className="s-form">
-                <label className="s-field">
-                  <span>Used</span>
-                  <input
-                    type="number" min={0} max={form.totalAllowance} step={1}
-                    value={form.usedAmount}
-                    onChange={(e) => setForm({ ...form, usedAmount: +e.target.value })}
-                  />
-                </label>
-                <label className="s-field">
-                  <span>Total</span>
-                  <input
-                    type="number" min={1} step={1}
-                    value={form.totalAllowance}
-                    onChange={(e) => setForm({ ...form, totalAllowance: +e.target.value })}
-                  />
-                </label>
+                {/* API key — only for providers that use external APIs */}
+                {p.type === "codex" && (
+                  <label className="s-field">
+                    <span>API Key</span>
+                    <input
+                      type="password"
+                      placeholder="sk-..."
+                      value={form.apiKey}
+                      onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
+                    />
+                  </label>
+                )}
+
+                {/* Manual usage — only for non-auto-sync or token-budget providers */}
+                {(!p.autoSync || p.type === "claude") && (
+                  <>
+                    <label className="s-field">
+                      <span>Used {unitLabel(p)}</span>
+                      <input
+                        type="number" min={0} step={p.allowanceUnit === "usd" ? 0.01 : 1}
+                        value={form.usedAmount}
+                        onChange={(e) => setForm({ ...form, usedAmount: +e.target.value })}
+                        disabled={p.autoSync}
+                      />
+                    </label>
+                    <label className="s-field">
+                      <span>Budget {unitLabel(p)}</span>
+                      <input
+                        type="number" min={1} step={p.allowanceUnit === "usd" ? 1 : 1}
+                        value={form.totalAllowance}
+                        onChange={(e) => setForm({ ...form, totalAllowance: +e.target.value })}
+                      />
+                    </label>
+                  </>
+                )}
+
                 <label className="s-field">
                   <span>Cadence</span>
                   <select
@@ -110,7 +137,7 @@ export default function Settings() {
                   </select>
                 </label>
                 <label className="s-field">
-                  <span>Reset Date</span>
+                  <span>Next Reset</span>
                   <input
                     type="date"
                     value={form.resetAt}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
+import { LogicalSize } from "@tauri-apps/api/dpi";
 import { useProviders } from "../store/useProviders";
 import ProviderRow from "./ProviderRow";
 import Settings from "./Settings";
@@ -79,6 +80,15 @@ export default function Widget() {
             title={widgetState.isExpanded ? "Collapse" : "Expand"}
             onClick={(e) => { e.stopPropagation(); setWidget({ isExpanded: !widgetState.isExpanded }); }}
           >{widgetState.isExpanded ? "▲" : "▼"}</button>
+          <button
+            className="widget__icon-btn"
+            title="Switch to pill mode"
+            onClick={(e) => {
+              e.stopPropagation();
+              setWidget({ viewMode: "pill" });
+              void getCurrentWindow().setSize(new LogicalSize(200, 34));
+            }}
+          >◉</button>
         </div>
       </div>
 

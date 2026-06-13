@@ -37,10 +37,11 @@ async function initSchema(db: Database): Promise<void> {
     )
   `);
 
-  // Migrations: add new columns if they don't exist yet (ALTER TABLE ignores duplicate errors)
+  // Migrations: add new columns if they don't exist yet
   for (const sql of [
     "ALTER TABLE providers ADD COLUMN tokens_budget INTEGER DEFAULT 5000000",
     "ALTER TABLE providers ADD COLUMN auto_sync     INTEGER DEFAULT 0",
+    "ALTER TABLE providers ADD COLUMN api_key       TEXT",
   ]) {
     try { await db.execute(sql); } catch { /* column already exists */ }
   }
@@ -105,6 +106,7 @@ function rowToProvider(r: any): Provider {
     notes:          r.notes ?? undefined,
     autoSync:       r.auto_sync === 1,
     tokensBudget:   r.tokens_budget ?? 5_000_000,
+    apiKey:         r.api_key ?? undefined,
   };
 }
 
@@ -129,6 +131,8 @@ export async function saveProvider(id: number, updates: Partial<Provider>): Prom
     reset_cadence:   updates.resetCadence,
     reset_at:        updates.resetAt,
     notes:           updates.notes,
+    api_key:         updates.apiKey,
+    auto_sync:       updates.autoSync === undefined ? undefined : (updates.autoSync ? 1 : 0),
   };
 
   for (const [col, val] of Object.entries(map)) {
